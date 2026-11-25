@@ -16,11 +16,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  # Pacote e deploy em jobs separados (como recomenda o GitHub Pages): no
+  # mesmo job, o deploy às vezes não acha o pacote recém-enviado. E refazer só
+  # o deploy que falhou não envia um pacote repetido.
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - run: gh release download --repo "$GITHUB_REPOSITORY" --pattern fermata-web.zip
         env:
@@ -29,5 +29,13 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
